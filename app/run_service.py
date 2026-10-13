@@ -8,7 +8,7 @@ from app.common.messaging.event_keys import EventKeys
 from app.cve_matching.runner import run as run_cve_matching
 from app.misconfig_detection.runner import run as run_misconfig_detection
 from app.risk_scoring.runner import run as run_risk_scoring
-from app.scope import validate_request
+from app.validate import validate_request
 
 logger = logging.getLogger(__name__)
 
