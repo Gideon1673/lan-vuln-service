@@ -65,5 +65,4 @@ def publish_stage_completed(request: dict):
         scan_id=request["scan_id"],
         data={"stage_run_id": request["data"]["stage_run_id"], "status": "success"}
     )
-
     bus.publish(EventKeys.STAGE_COMPLETED, event)

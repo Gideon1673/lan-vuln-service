@@ -5,7 +5,9 @@ from app.common.messaging.assessment_events import publish_step_completed, publi
 from app.common.messaging.rabbitmq import RabbitEventBus
 from app.common.messaging.event_keys import EventKeys
 
-from app.cve_matching.stage import run as run_cve_matching
+from app.cve_matching.runner import run as run_cve_matching
+from app.misconfig_detection.runner import run as run_misconfig_detection
+from app.risk_scoring.runner import run as run_risk_scoring
 from app.scope import validate_request
 
 logger = logging.getLogger(__name__)
@@ -15,14 +17,20 @@ bus = RabbitEventBus(RabbitMQConfig.from_env())
 
 def handle_assessment(event):
     validate_request(event)
-    context = {"step": "NORMALIZE_SOFTWARE"}
+    context = {"step": "cve_matching"}
 
     def completed(step, result, **details):
         publish_step_completed(event, step, result, **details)
 
-    run_cve_matching(event, completed, context)
+    run_cve_matching(event, completed)
 
-    # publish_stage_completed(event)
+    context["step"] = "misconfig_detection"
+    run_misconfig_detection(event, completed)
+
+    context["step"] = "risk_scoring"
+    run_risk_scoring(event, completed)
+
+    publish_stage_completed(event)
 
 
 def handle_scan_cancelled(event):

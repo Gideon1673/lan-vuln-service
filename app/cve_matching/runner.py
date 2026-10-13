@@ -12,12 +12,11 @@ from app.cve_matching.repository import save_findings
 logger = logging.getLogger(__name__)
 
 
-def run(request, completed, context):
+def run(request, completed):
     started_at = perf_counter()
     catalog = NvdCatalog()
 
     # STEP 1: NORMALIZE SOFTWARE
-    context["step"] = "NORMALIZE_SOFTWARE"
     services = extract_software(request)
 
     normalized = [
@@ -27,15 +26,12 @@ def run(request, completed, context):
     ]
 
     # STEP 2: RESOLVE CPE
-    context["step"] = "RESOLVE_CPE"
     resolved = resolve_cpes(normalized, catalog=catalog)
 
     # STEP 3: MATCH CVE
-    context["step"] = "MATCH_CVE"
     findings = match_cves(resolved, catalog=catalog)
 
     # STEP 4: SAVE FINDINGS
-    context["step"] = "SAVE_FINDINGS"
     save_findings(request, findings)
 
     logger.info("cve matching finished scan=%s software=%d findings=%d",
