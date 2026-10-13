@@ -17,8 +17,8 @@ def handle_assessment(event):
     validate_request(event)
     context = {"step": "NORMALIZE_SOFTWARE"}
 
-    def completed(step, count, last_step=False):
-        publish_step_completed(event, step, items=count, last_step=last_step)
+    def completed(step, result, **details):
+        publish_step_completed(event, step, result, **details)
 
     run_cve_matching(event, completed, context)
 

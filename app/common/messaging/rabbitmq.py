@@ -49,12 +49,12 @@ class RabbitEventBus:
                     content_type="application/json",
                     content_encoding="utf-8",
                     delivery_mode=2,
-                    message_id=event.event_id,
-                    correlation_id=event.stage_run_id
+                    message_id=event.message_id,
+                    correlation_id=event.data.get("stage_run_id")
                 )
             )
 
-            logger.info("Published event=%s event_id=%s", routing_key, event.event_id)
+            logger.info("Published event=%s message_id=%s", routing_key, event.message_id)
 
         finally:
             if connection.is_open: connection.close()

@@ -1,4 +1,5 @@
 import logging
+from time import perf_counter
 
 from app.cve_matching.extractor import extract_software
 from app.nvd.catalog import NvdCatalog
@@ -12,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def run(request, completed, context):
+    started_at = perf_counter()
     catalog = NvdCatalog()
 
     # STEP 1: NORMALIZE SOFTWARE
@@ -39,4 +41,4 @@ def run(request, completed, context):
     logger.info("cve matching finished scan=%s software=%d findings=%d",
                 request["scan_id"], len(normalized), len(findings))
 
-    completed("cve_matching", len(findings))
+    completed("cve_matching", {"findings": findings}, duration_ms=int((perf_counter() - started_at) * 1000))
