@@ -15,6 +15,9 @@ class ServiceConfig:
     nvd_api_key: str
     nvd_cache_hours: int
     nvd_request_interval: float
+    cpe_auto_fetch_enabled: bool
+    cpe_fetch_interval_hours: int
+    cpe_fetch_limit_per_product: int
 
     @classmethod
     def from_env(cls) -> "ServiceConfig":
@@ -23,7 +26,10 @@ class ServiceConfig:
             nvd_client_url=os.getenv("NVD_CLIENT_URL", "https://services.nvd.nist.gov/rest/json"),
             nvd_api_key=os.getenv("NVD_API_KEY", ""),
             nvd_cache_hours=int(os.getenv("NVD_CACHE_HOURS", "24")),
-            nvd_request_interval=float(os.getenv("NVD_REQUEST_INTERVAL", "7"))
+            nvd_request_interval=float(os.getenv("NVD_REQUEST_INTERVAL", "7")),
+            cpe_auto_fetch_enabled=(os.getenv("CPE_AUTO_FETCH_ENABLED", "false").lower() == "true"),
+            cpe_fetch_interval_hours=int(os.getenv("CPE_FETCH_INTERVAL_HOURS", "24")),
+            cpe_fetch_limit_per_product=int(os.getenv("CPE_FETCH_LIMIT_PER_PRODUCT", "500")),
         )
 
 

@@ -10,6 +10,8 @@ from app.misconfig_detection.runner import run as run_misconfig_detection
 from app.risk_scoring.runner import run as run_risk_scoring
 from app.validate import validate_request
 
+from app.nvd.auto_fetch_cpe import CpeAutoFetcher
+
 logger = logging.getLogger(__name__)
 
 bus = RabbitEventBus(RabbitMQConfig.from_env())
@@ -42,9 +44,15 @@ def handle_scan_cancelled(event):
 
 def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s", )
+    cpe_fetcher = CpeAutoFetcher()
+    cpe_fetcher.start()
     bus.subscribe(EventKeys.ASSESSMENT_REQUESTED, handle_assessment)
     bus.subscribe(EventKeys.SCAN_CANCELLED, handle_scan_cancelled)
-    bus.start()
+
+    try:
+        bus.start()
+    finally:
+        cpe_fetcher.stop()
 
 
 if __name__ == "__main__":
