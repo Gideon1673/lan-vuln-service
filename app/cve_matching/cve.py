@@ -1,3 +1,8 @@
+"""Bước này là bước tìm kiếm các CVE lỗ hổng công khai của các CPE mà ta đã định danh được trước đó.
+
+Rồi kiểm tra điều kiện ảnh hưởng của CVE
+"""
+
 import logging
 
 from app.cve_matching.matching import get_cvss, check_criterion

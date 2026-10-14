@@ -1,3 +1,4 @@
+"""Bước này chuẩn hóa thông tin phần mềm thành định dạng thống nhất"""
 import re
 
 PRODUCTS = {

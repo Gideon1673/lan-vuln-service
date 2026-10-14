@@ -1,3 +1,4 @@
+"""Bước này trích xuất thông tin phần mềm, duyệt qua các snapshot mà discovery quét được"""
 import json
 import logging
 import re

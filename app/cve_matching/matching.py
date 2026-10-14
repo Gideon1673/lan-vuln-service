@@ -1,3 +1,9 @@
+"""
+Bước này Lấy mức độ nghiêm trọng và tạo Finding chứa thông tin thiết bị, phần mềm, phiên bản, CPE, mã CVE, điểm CVSS,
+trạng thái đánh giá và bằng chứng như HTTP Banner cùng đường dẫn tham chiếu NVD.
+
+
+"""
 import re
 from itertools import zip_longest
 

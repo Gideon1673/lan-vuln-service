@@ -1,3 +1,6 @@
+"""Bước này là bước nhận diện sản phẩm theo chuẩn CPE từ thông tin đã được chuẩn hóa của các phần mềm.
+CPE đóng vai trò là định danh thống nhất để đối chiếu phần mềm với cơ sở dữ liệu lỗ hổng NVD
+"""
 import logging
 
 from app.nvd.catalog import NvdCatalog
