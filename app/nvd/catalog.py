@@ -65,14 +65,9 @@ class NvdCatalog:
 
         if not force:
             cached = get_cache(key, service_config.nvd_cache_hours)
-            if cached is not None:
-                return cached
+            if cached is not None: return cached
 
-        vulnerabilities = self.client.get_all(
-            "cves/2.0",
-            {"cpeName": cpe_name},
-            "vulnerabilities"
-        )
+        vulnerabilities = self.client.get_all("cves/2.0", {"cpeName": cpe_name}, "vulnerabilities")
 
         cves = [
             item["cve"]
@@ -82,5 +77,28 @@ class NvdCatalog:
 
         save_cache(key, cves)
         logger.info("CVE loaded: cpe=%s count=%d", cpe_name, len(cves))
+
+        return cves
+
+    def cves_virtual(self, match_string: str, force=False):
+        """tìm CVE theo CPE Match Criteria"""
+
+        key = f"cves_virtual|{match_string}"
+
+        if not force:
+            cached = get_cache(key, service_config.nvd_cache_hours)
+            if cached is not None: return cached
+
+        vulnerabilities = self.client.get_all("cves/2.0", {"virtualMatchString": match_string}, "vulnerabilities")
+
+        cves = [
+            item["cve"]
+            for item in vulnerabilities
+            if item["cve"].get("vulnStatus", "").lower() != "rejected"
+        ]
+
+        save_cache(key, cves)
+
+        logger.info("Virtual CVE lookup: match=%s count=%d", match_string, len(cves))
 
         return cves

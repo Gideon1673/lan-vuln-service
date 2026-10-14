@@ -115,3 +115,14 @@ CREATE INDEX IF NOT EXISTS idx_cpe_modified
 CREATE INDEX IF NOT EXISTS idx_cpe_active
     ON vuln_cpe_dictionary (vendor, product)
     WHERE deprecated = FALSE;
+
+CREATE TABLE vuln_service_fingerprint (
+    id BIGSERIAL PRIMARY KEY,
+    service TEXT NOT NULL,
+    pattern TEXT NOT NULL,
+    product_template TEXT,
+    version_template TEXT,
+    cpe_template TEXT,
+    source TEXT NOT NULL DEFAULT 'NMAP',
+    enabled BOOLEAN NOT NULL DEFAULT TRUE
+);

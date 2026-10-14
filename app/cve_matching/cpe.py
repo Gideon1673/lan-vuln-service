@@ -1,15 +1,11 @@
-"""Bước này là bước nhận diện sản phẩm theo chuẩn CPE từ thông tin đã được chuẩn hóa của các phần mềm.
-CPE đóng vai trò là định danh thống nhất để đối chiếu phần mềm với cơ sở dữ liệu lỗ hổng NVD
-"""
 import logging
 
-from app.nvd.catalog import NvdCatalog
+from app.cve_matching.repository import find_cpe_names
 
 logger = logging.getLogger(__name__)
 
 
-def resolve_cpes(normalized, catalog=None):
-    catalog = catalog or NvdCatalog()
+def resolve_cpes(normalized):
     resolved = []
     seen = set()
 
@@ -18,24 +14,43 @@ def resolve_cpes(normalized, catalog=None):
         vendor = software["vendor"]
         product = software["product"]
         version = software["version"]
+        service = software["service"]
 
-        candidate = (
-            f"cpe:2.3:{part}:{vendor}:{product}:"
-            f"{version}:*:*:*:*:*:*:*"
-        )
+        # 1. Tìm CPE chính thức từ PostgreSQL
+        official_names = find_cpe_names(part=part, vendor=vendor, product=product, version=version)
 
-        key = (
-            software["service"]["host"],
-            software["service"]["port"],
-            software["service"]["protocol"],
-            candidate
-        )
+        if official_names:
+            candidates = [(name, "OFFICIAL") for name in official_names]
+        else:
+            # 2. Fallback: Match Criteria theo sản phẩm
+            # Không coi đây là Official CPE Name.
+            virtual_match = f"cpe:2.3:{part}:{vendor}:{product}:""*:*:*:*:*:*:*:*"
+            # Chỉ dùng để kiểm tra version range nội bộ.
+            target = (
+                f"cpe:2.3:{part}:{vendor}:{product}:"
+                f"{version}:*:*:*:*:*:*:*"
+            )
+            candidates = [(target, "VIRTUAL_MATCH")]
+            logger.info("CPE fallback: product=%s version=%s query=%s", product, version, virtual_match)
 
-        if key in seen:
-            continue
+        for cpe_name, method in candidates:
+            key = (
+                service.get("host"),
+                service.get("port"),
+                service.get("protocol"),
+                cpe_name
+            )
+            if key in seen: continue
+            seen.add(key)
+            item = {**software, "cpe_resolution": method}
 
-        seen.add(key)
-        resolved.append((software, candidate))
+            if method == "VIRTUAL_MATCH":
+                item["virtual_match_string"] = (
+                    f"cpe:2.3:{part}:{vendor}:{product}:"
+                    "*:*:*:*:*:*:*:*"
+                )
+            resolved.append((item, cpe_name))
 
-    logger.info("CPE candidates: %d", len(resolved))
+    logger.info("Resolved %d official CPE records", len(resolved))
+
     return resolved

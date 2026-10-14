@@ -137,27 +137,77 @@ def match_cve(cve, cpe_name):
     return "NEEDS_REVIEW"
 
 
-def get_cvss(cve):
-    metrics = cve.get("metrics", {})
+def _severity_from_score(score):
+    """các ngưỡng CVSS chuẩn của FIRST"""
 
-    for field in ("cvssMetricV40", "cvssMetricV31", "cvssMetricV30", "cvssMetricV2"):
-        records = metrics.get(field, [])
-        if not records:
+    if score is None: return "UNKNOWN"
+    if score == 0: return "NONE"
+    if score < 4: return "LOW"
+    if score < 7: return "MEDIUM"
+    if score < 9: return "HIGH"
+    return "CRITICAL"
+
+
+def get_cvss(cve: dict) -> dict:
+    """Lấy các chỉ số CVSS được ưu tiên từ NVD"""
+
+    metrics = cve.get("metrics") or {}
+
+    versions = (("cvssMetricV40", "4.0"), ("cvssMetricV31", "3.1"), ("cvssMetricV30", "3.0"), ("cvssMetricV2", "2.0"))
+
+    for field, version in versions:
+        records = metrics.get(field) or []
+        if not records: continue
+
+        valid_records = [
+            record
+            for record in records
+            if isinstance(record, dict)
+               and isinstance(record.get("cvssData"), dict)
+               and record["cvssData"].get("baseScore") is not None
+        ]
+
+        if not valid_records: continue
+
+        # Ưu tiên NVD đầu tiên khớp
+        metric = min(
+            valid_records,
+            key=lambda record: (
+                record.get("source") != "nvd@nist.gov",
+                record.get("type", "").lower() != "primary",
+            )
+        )
+
+        data = metric["cvssData"]
+
+        try:
+            score = float(data["baseScore"])
+        except (ValueError, TypeError):
             continue
 
-        metric = next(
-            (
-                record for record in records
-                if record.get("type") == "Primary"
-            ),
-            records[0]
-        )
+        if not 0 <= score <= 10: continue
 
-        data = metric.get("cvssData", {})
+        severity = (data.get("baseSeverity") or metric.get("baseSeverity"))
 
-        return (
-            data.get("baseScore"),
-            data.get("baseSeverity", metric.get("baseSeverity", "UNKNOWN"))
-        )
+        severity = (str(severity).upper() if severity else _severity_from_score(score))
 
-    return None, "UNKNOWN"
+        if severity not in {"NONE", "LOW", "MEDIUM", "HIGH", "CRITICAL"}:
+            severity = _severity_from_score(score)
+
+        return {
+            "score": score,
+            "severity": severity,
+            "version": version,
+            "vector": data.get("vectorString"),
+            "source": metric.get("source"),
+            "type": metric.get("type"),
+        }
+
+    return {
+        "score": None,
+        "severity": "UNKNOWN",
+        "version": None,
+        "vector": None,
+        "source": None,
+        "type": None,
+    }

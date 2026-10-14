@@ -26,7 +26,7 @@ def run(request, completed):
     ]
 
     # STEP 2: RESOLVE CPE
-    resolved = resolve_cpes(normalized, catalog=catalog)
+    resolved = resolve_cpes(normalized)
 
     # STEP 3: MATCH CVE
     findings = match_cves(resolved, catalog=catalog)
