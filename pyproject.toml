@@ -1,0 +1,26 @@
+[project]
+name = "lan-vuln-service"
+version = "0.1.0"
+description = "LAN vulnerability assessment service using RabbitMQ, PostgreSQL, and NVD"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "rich",
+    "Flask>=3.1,<4",
+    "pika==1.3.2",
+    "SQLAlchemy>=2.0,<3",
+    "psycopg[binary]>=3.2,<4",
+    "requests>=2.32,<3",
+    "python-dotenv>=1.0,<2",
+    "packaging>=24,<27",
+]
+
+[dependency-groups]
+dev = ["pytest>=8,<10"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+pythonpath = ["."]

@@ -5,7 +5,20 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-load_dotenv(PROJECT_ROOT / ".env")
+
+
+def load_environment() -> None:
+    """Load the selected dotenv file without replacing process environment values."""
+    custom_file = os.getenv("LAN_VULN_ENV_FILE")
+    env_file = Path(custom_file).expanduser() if custom_file else Path(".env")
+    if not env_file.is_absolute():
+        env_file = PROJECT_ROOT / env_file
+    if custom_file and not env_file.is_file():
+        raise FileNotFoundError(f"Configuration file not found: {env_file}")
+    load_dotenv(env_file, override=False)
+
+
+load_environment()
 
 
 @dataclass(frozen=True)
