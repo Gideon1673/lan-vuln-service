@@ -1,0 +1,62 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "LAN Vuln: Worker",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "app.run_service",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "envFile": "${workspaceFolder}/${input:envFile}",
+            "env": {
+                "LAN_VULN_ENV_FILE": "${input:envFile}",
+                "PYTHONUNBUFFERED": "1"
+            }
+        },
+        {
+            "name": "LAN Vuln: API",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "app.api",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "envFile": "${workspaceFolder}/${input:envFile}",
+            "env": {
+                "LAN_VULN_ENV_FILE": "${input:envFile}",
+                "PYTHONUNBUFFERED": "1"
+            }
+        },
+        {
+            "name": "LAN Vuln: RabbitMQ setup",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "app.common.messaging.setup",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "envFile": "${workspaceFolder}/${input:envFile}",
+            "env": {
+                "LAN_VULN_ENV_FILE": "${input:envFile}",
+                "PYTHONUNBUFFERED": "1"
+            }
+        }
+    ],
+    "compounds": [
+        {
+            "name": "LAN Vuln: Worker + API",
+            "configurations": ["LAN Vuln: Worker", "LAN Vuln: API"],
+            "stopAll": true
+        }
+    ],
+    "inputs": [
+        {
+            "id": "envFile",
+            "type": "promptString",
+            "description": "Configuration file path relative to the workspace (e.g. .env or .env.debug)",
+            "default": ".env"
+        }
+    ]
+}
