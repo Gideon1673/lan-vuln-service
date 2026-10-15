@@ -49,6 +49,11 @@ def normalize(service: dict) -> dict | None:
     raw_product = service.get("product") or ""
     raw_version = service.get("version")
 
+    # OS fingerprint chưa được xác minh phiên bản
+    if service.get("source") == "OS_FINGERPRINT":
+        logger.info("Skipping unverified OS fingerprint: %s", raw_product)
+        return None
+
     product_name = " ".join(str(raw_product).lower().split())
 
     if raw_version is None: return None

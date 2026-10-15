@@ -1,4 +1,5 @@
 import json
+import re
 
 from sqlalchemy import text
 from app.common.database import db
@@ -165,30 +166,52 @@ def find_product_by_cpe(part: str, vendor: str, product: str) -> dict | None:
 
 
 def find_products(name: str, limit: int = 10) -> list[dict]:
+    if limit < 1: raise ValueError("limit must be positive")
     name = " ".join(name.lower().split())
 
-    if not name:
-        return []
+    if not name: return []
 
-    sql = text("""
+    search_name = " ".join(re.sub(r"[_-]+", " ", name).split())
+    words = search_name.split()
+    # Khớp cụm nguyên từ ở mọi vị trí, ưu tiên cụm dài hơn.
+    phrases = sorted({
+        " ".join(words[start:end])
+        for start in range(len(words))
+        for end in range(start + 1, len(words) + 1)
+        if end - start < len(words) and len(" ".join(words[start:end])) >= 3
+    }, key=lambda value: (-len(value.split()), value))
+    phrase_params = {f"phrase_{index}": value for index, value in enumerate(phrases)}
+    product_name = "LOWER(REPLACE(REPLACE(product, '_', ' '), '-', ' '))"
+    phrase_scores = " ".join(
+        f"WHEN {product_name} = :phrase_{index} THEN {80 + min(len(value.split()), 9)}"
+        for index, value in enumerate(phrases)
+    )
+    tokens = sorted({word for word in words if len(word) >= 3})
+    token_params = {f"token_{index}": _search_pattern(value) for index, value in enumerate(tokens)}
+    token_matches = " + ".join(
+        f"CASE WHEN {product_name} LIKE :token_{index} ESCAPE '\\' "
+        f"OR LOWER(display_name) LIKE :token_{index} ESCAPE '\\' THEN 1 ELSE 0 END"
+        for index in range(len(tokens))
+    ) or "0"
+
+    sql = text(f"""
         WITH candidates AS (
             SELECT
                 part, vendor, product,
                 CASE
                     WHEN LOWER(product) = :name THEN 100
-                    WHEN LOWER(REPLACE(product, '_', ' ')) = :name THEN 90
-                    WHEN LOWER(display_name) = :name THEN 80
-                    WHEN LOWER(display_name) LIKE '%' || :name || '%'
+                    WHEN {product_name} = :search_name THEN 90
+                    WHEN LOWER(display_name) = :name THEN 90
+                    {phrase_scores}
+                    WHEN {product_name} LIKE :display_pattern ESCAPE '\\'
+                        OR LOWER(display_name) LIKE :display_pattern ESCAPE '\\'
                         THEN 60
-                    ELSE 0
+                    ELSE CASE WHEN ({token_matches}) > 0
+                        THEN 40 + CASE WHEN ({token_matches}) > 3 THEN 39 ELSE ({token_matches}) * 10 END
+                        ELSE 0 END
                 END AS score
             FROM vuln_cpe_dictionary
             WHERE deprecated = FALSE
-              AND (
-                  LOWER(product) = :name
-                  OR LOWER(REPLACE(product, '_', ' ')) = :name
-                  OR LOWER(display_name) LIKE '%' || :name || '%'
-              )
         )
         SELECT part, vendor, product, MAX(score) AS score
         FROM candidates
@@ -201,10 +224,18 @@ def find_products(name: str, limit: int = 10) -> list[dict]:
     with db.connect() as conn:
         rows = conn.execute(sql, {
             "name": name,
+            "search_name": search_name,
+            **phrase_params,
+            **token_params,
+            "display_pattern": _search_pattern(search_name),
             "limit": limit
         }).mappings().all()
 
     return [dict(row) for row in rows]
+
+
+def _search_pattern(value: str) -> str:
+    return "%" + value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
 
 
 def find_cpe_names(part: str,vendor: str,product: str,version: str) -> list[str]:

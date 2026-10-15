@@ -1,6 +1,7 @@
 import logging
 
 from app.common.config import RabbitMQConfig
+from app.common.logging_config import setup_logging
 from app.common.messaging.assessment_events import publish_step_completed, publish_stage_completed
 from app.common.messaging.rabbitmq import RabbitEventBus
 from app.common.messaging.event_keys import EventKeys
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 bus = RabbitEventBus(RabbitMQConfig.from_env())
 
+setup_logging()
 
 def handle_assessment(event):
     validate_request(event)
