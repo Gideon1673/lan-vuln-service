@@ -10,7 +10,7 @@ The `platform.inbox` queue receives assessment events through the
 Initialize this topology before starting the worker:
 
 ```powershell
-python -m app.common.messaging.setup
+uv run --locked python -m app.common.messaging.setup
 ```
 
 The exchange name and type use `RABBITMQ_EXCHANGE=lan_scanner` and
