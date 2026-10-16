@@ -7,6 +7,7 @@ from app.common.messaging.rabbitmq import RabbitEventBus
 from app.common.messaging.event_keys import EventKeys
 
 from app.cve_matching.runner import run as run_cve_matching
+from app.misconfig_detection.misconfig_rules.auto_fetch_rule.auto_fetch import MisconfigRuleAutoFetcher
 from app.misconfig_detection.runner import run as run_misconfig_detection
 from app.risk_scoring.runner import run as run_risk_scoring
 from app.validate import validate_request
@@ -48,6 +49,8 @@ def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s", )
     cpe_fetcher = CpeAutoFetcher()
     cpe_fetcher.start()
+    misconfig_auto_fetcher = MisconfigRuleAutoFetcher()
+    misconfig_auto_fetcher.start()
     bus.subscribe(EventKeys.ASSESSMENT_REQUESTED, handle_assessment)
     bus.subscribe(EventKeys.SCAN_CANCELLED, handle_scan_cancelled)
 
@@ -55,6 +58,7 @@ def main():
         bus.start()
     finally:
         cpe_fetcher.stop()
+        misconfig_auto_fetcher.stop()
 
 
 if __name__ == "__main__":

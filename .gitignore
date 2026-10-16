@@ -1,6 +1,7 @@
 .idea
 .venv
 *.rar
+data
 .env
 .env.*
 !.env.example

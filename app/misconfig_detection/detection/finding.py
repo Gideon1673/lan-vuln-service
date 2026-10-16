@@ -1,0 +1,37 @@
+"""Tạo Misconfiguration Finding từ kết quả Rule Engine."""
+
+from copy import deepcopy
+
+
+class MisconfigFindingFactory:
+    """Chuyển kết quả đánh giá MATCH thành Finding."""
+
+    @staticmethod
+    def create(scan_id: str, stage_run_id: str, evaluation: dict, rule: dict, device: dict) -> dict:
+        if evaluation.get("status") != "MATCH":
+            raise ValueError("Only MATCH evaluations can create findings")
+
+        if not scan_id or not stage_run_id:
+            raise ValueError("Scan ID and stage run ID are required")
+
+        if evaluation.get("device_ip") != device.get("ip"):
+            raise ValueError("Evaluation device IP does not match")
+
+        if evaluation.get("normalized_rule_id") != rule.get("id"):
+            raise ValueError("Evaluation rule ID does not match")
+
+        if not isinstance(evaluation.get("evidence"), dict) or not evaluation["evidence"]:
+            raise ValueError("Finding must contain supporting evidence")
+
+        return {
+            "scan_id": scan_id,
+            "stage_run_id": stage_run_id,
+            "device_ip": device["ip"],
+            "normalized_rule_id": rule["id"],
+            "external_rule_id": rule.get("external_rule_id"),
+            "title": rule.get("title") or rule.get("external_rule_id") or "Misconfiguration detected",
+            "severity": rule.get("severity") or "UNKNOWN",
+            "evaluation_status": "MATCH",
+            "reason": evaluation.get("reason"),
+            "evidence": deepcopy(evaluation["evidence"])
+        }
