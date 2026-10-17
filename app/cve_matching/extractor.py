@@ -87,6 +87,8 @@ def _extract_services(devices, evidence_by_host):
                 "source": "SERVICE_FINGERPRINT",
                 "banner": _text(service.get("banner")),
                 "raw_version": version,
+                "state": _text(port_data.get("state")),
+                "metadata": port_data.get("metadata") if isinstance(port_data.get("metadata"), dict) else {},
                 "product_identified": product is not None,
                 "evidence": [
                     item

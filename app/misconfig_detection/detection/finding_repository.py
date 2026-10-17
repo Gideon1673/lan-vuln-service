@@ -14,17 +14,18 @@ class MisconfigFindingRepository:
 
     INSERT_SQL = text("""
         INSERT INTO vuln_misconfig_finding (
-            scan_id, stage_run_id, device_ip, normalized_rule_id,
+            finding_id, scan_id, stage_run_id, device_ip, normalized_rule_id,
             external_rule_id, title, severity, evaluation_status,
             reason, evidence
         )
         VALUES (
-            :scan_id, :stage_run_id, :device_ip, :normalized_rule_id,
+            :finding_id, :scan_id, :stage_run_id, :device_ip, :normalized_rule_id,
             :external_rule_id, :title, :severity, :evaluation_status,
             :reason, :evidence
         )
         ON CONFLICT (stage_run_id, device_ip, normalized_rule_id)
         DO UPDATE SET
+            finding_id = EXCLUDED.finding_id,
             external_rule_id = EXCLUDED.external_rule_id,
             title = EXCLUDED.title,
             severity = EXCLUDED.severity,
@@ -37,7 +38,7 @@ class MisconfigFindingRepository:
         if not findings:
             return 0
 
-        with db.begin() as conn:
+        with db.transaction() as conn:
             for finding in findings:
                 conn.execute(self.INSERT_SQL, finding)
 

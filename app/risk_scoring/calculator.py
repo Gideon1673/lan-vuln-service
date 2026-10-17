@@ -13,6 +13,38 @@ MISCONFIG_SCORES = {
 }
 
 ADDITIONAL_FINDING_WEIGHT = 0.2
+POLICY_VERSION = "mvp-1"
+MANAGEMENT_PORTS = {22, 23, 3389, 5985, 5986}
+
+
+def calculate_finding(finding: dict[str, Any]) -> dict[str, Any] | None:
+    """Tính điểm từng finding và ghi rõ các yếu tố cộng điểm."""
+    base = get_finding_score(finding)
+    if base is None:
+        return None
+
+    contributions = []
+    reasons = []
+    evidence = finding.get("evidence") or {}
+    if (finding.get("protocol") == "tcp"
+            and type(finding.get("port")) is int
+            and finding["port"] in MANAGEMENT_PORTS
+            and evidence.get("state") == "open"):
+        contributions.append({"factor": "management_port_exposed", "delta": 1.0})
+        reasons.append("Management service exposed")
+
+    score = min(10.0, max(0.0, base + sum(item["delta"] for item in contributions)))
+    return {
+        "finding_id": finding["finding_id"],
+        "risk_score": round(score, 1),
+        "explanation": {
+            "policy_version": POLICY_VERSION,
+            "base": base,
+            "base_source": "cvss" if str(finding.get("type")).upper() == "CVE" else "severity",
+            "contributions": contributions,
+            "reasons": reasons,
+        },
+    }
 
 
 def get_finding_score(finding: dict[str, Any]) -> float | None:

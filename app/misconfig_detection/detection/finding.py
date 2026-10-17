@@ -1,6 +1,7 @@
 """Tạo Misconfiguration Finding từ kết quả Rule Engine."""
 
 from copy import deepcopy
+from app.common.finding_id import create_finding_id
 
 
 class MisconfigFindingFactory:
@@ -24,6 +25,7 @@ class MisconfigFindingFactory:
             raise ValueError("Finding must contain supporting evidence")
 
         return {
+            "finding_id": create_finding_id("MISCONFIG", scan_id, stage_run_id, device["ip"], rule["id"]),
             "scan_id": scan_id,
             "stage_run_id": stage_run_id,
             "device_ip": device["ip"],

@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS vuln_nvd_cache (
 );
 
 CREATE TABLE IF NOT EXISTS vuln_finding (
+    finding_id UUID NOT NULL UNIQUE,
     stage_run_id TEXT NOT NULL,
     scan_id TEXT NOT NULL,
 
@@ -434,6 +435,7 @@ CREATE TABLE IF NOT EXISTS vuln_misconfig_rule_normalized (
 
 CREATE TABLE IF NOT EXISTS vuln_misconfig_finding (
     id BIGSERIAL PRIMARY KEY,
+    finding_id UUID NOT NULL UNIQUE,
     scan_id TEXT NOT NULL,
     stage_run_id TEXT NOT NULL,
     device_ip VARCHAR(45) NOT NULL,
@@ -451,5 +453,24 @@ CREATE TABLE IF NOT EXISTS vuln_misconfig_finding (
 CREATE INDEX IF NOT EXISTS idx_misconfig_finding_scan
 ON vuln_misconfig_finding (scan_id);
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_misconfig_finding_identity
+ON vuln_misconfig_finding (stage_run_id, device_ip, normalized_rule_id);
+
 CREATE INDEX IF NOT EXISTS idx_misconfig_finding_device
 ON vuln_misconfig_finding (device_ip);
+
+CREATE TABLE IF NOT EXISTS vuln_risk_result (
+    scan_id TEXT NOT NULL,
+    stage_run_id TEXT NOT NULL,
+    host TEXT NOT NULL,
+    risk_score NUMERIC(4,2) NOT NULL CHECK (risk_score BETWEEN 0 AND 10),
+    risk_level VARCHAR(20) NOT NULL,
+    finding_count INTEGER NOT NULL,
+    scored_count INTEGER NOT NULL,
+    recommendations JSONB NOT NULL DEFAULT '[]'::jsonb,
+    review_status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    PRIMARY KEY (stage_run_id, host),
+    CHECK (review_status IN ('PENDING', 'APPROVED', 'REJECTED', 'REPORTED'))
+);

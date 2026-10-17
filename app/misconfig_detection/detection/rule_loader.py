@@ -12,7 +12,7 @@ class MisconfigRuleLoader:
         self.repository = repository or MisconfigRuleRepository()
 
     def load_enabled_rules(self) -> list[dict]:
-        """Lấy và kiểm tra các rule có thể thực thi."""
+        """Lấy rule có cấu trúc hợp lệ, không lọc theo cờ trạng thái."""
 
         records = self.repository.get_enabled_normalized_rules()
         rules = []

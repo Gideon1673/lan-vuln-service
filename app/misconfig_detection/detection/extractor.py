@@ -146,15 +146,19 @@ class MisconfigEvidenceExtractor:
             raise ValueError(f"devices[{device_index}].ports[{port_index}] must be an object")
 
         service = port.get("service")
+        metadata = port.get("metadata")
 
         if service is not None and not isinstance(service, dict):
             raise ValueError("Port service must be an object")
+        if metadata is not None and not isinstance(metadata, dict):
+            raise ValueError("Port metadata must be an object")
 
         return {
             "port": port.get("port"),
             "protocol": port.get("protocol"),
             "state": port.get("state"),
             "service": deepcopy(service) if service else None,
+            "metadata": deepcopy(metadata) if metadata is not None else {},
         }
 
     def _extract_snapshot(self, snapshot: dict, index: int, ) -> dict:

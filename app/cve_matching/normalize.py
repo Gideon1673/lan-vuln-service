@@ -50,9 +50,9 @@ def normalize(service: dict) -> dict | None:
     raw_version = service.get("version")
 
     # OS fingerprint chưa được xác minh phiên bản
-    if service.get("source") == "OS_FINGERPRINT":
-        logger.info("Skipping unverified OS fingerprint: %s", raw_product)
-        return None
+    # if service.get("source") == "OS_FINGERPRINT":
+    #     logger.info("Skipping unverified OS fingerprint: %s", raw_product)
+    #     return None
 
     product_name = " ".join(str(raw_product).lower().split())
 
@@ -72,12 +72,12 @@ def normalize(service: dict) -> dict | None:
         parsed = _parse_cpe(hint)
         if parsed is None: continue
 
-        # Không chấp nhận CPE có version mâu thuẫn với version mà Discovery đã xác định.
-        cpe_version = parsed["version"]
-
-        if cpe_version not in ("*", "-") and cpe_version != version:
-            logger.warning("CPE version mismatch: %s, version=%s", hint, version)
-            return None
+        # # Không chấp nhận CPE có version mâu thuẫn với version mà Discovery đã xác định.
+        # cpe_version = parsed["version"]
+        #
+        # if cpe_version not in ("*", "-") and cpe_version != version:
+        #     logger.warning("CPE version mismatch: %s, version=%s", hint, version)
+        #     return None
 
         product = find_product_by_cpe(parsed["part"], parsed["vendor"], parsed["product"])
 

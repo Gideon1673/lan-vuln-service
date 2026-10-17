@@ -3,11 +3,17 @@ import re
 
 from sqlalchemy import text
 from app.common.database import db
+from app.common.finding_id import create_finding_id
 
 
 def save_findings(request: dict, findings: list):
     stage_run_id = request['data']["stage_run_id"]
     scan_id = request["scan_id"]
+    for finding in findings:
+        finding["finding_id"] = create_finding_id(
+            "CVE", scan_id, stage_run_id, finding["host"],
+            finding.get("port"), finding.get("protocol"), finding["cve_id"],
+        )
 
     with db.transaction() as conn:
         # Xóa kết quả cũ của cùng lần chạy stage.
@@ -19,9 +25,9 @@ def save_findings(request: dict, findings: list):
         if not findings: return
 
         sql = text("""
-                   INSERT INTO vuln_finding (stage_run_id, scan_id, host, port, protocol, product, version, cpe, cve_id,
+                   INSERT INTO vuln_finding (finding_id, stage_run_id, scan_id, host, port, protocol, product, version, cpe, cve_id,
                                              cvss_score, severity, status, evidence)
-                   VALUES (:stage_run_id, :scan_id, :host, :port, :protocol, :product, :version, :cpe, :cve_id,
+                   VALUES (:finding_id, :stage_run_id, :scan_id, :host, :port, :protocol, :product, :version, :cpe, :cve_id,
                            :cvss_score, :severity, :status, CAST(:evidence AS jsonb))
                    """)
         params = [

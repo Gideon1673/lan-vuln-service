@@ -12,7 +12,7 @@ class MisconfigRuleNormalizationService:
     """
     Normalizer service thực hiện:
         1. Load Raw Rules
-        2. Load Active Mappings
+        2. Load Reviewed Mappings
         3. Ghép Rule với Mapping theo: source_id + source_file + content_sha256
         4. Validate Mapping
         5. Generate normalized_rule
@@ -59,7 +59,7 @@ class MisconfigRuleNormalizationService:
         if len(rules) != len(source_files):
             raise RuntimeError(f"Incomplete committed rule batch: expected={len(source_files)}, loaded={len(rules)}")
 
-        # Step 2: Load active and reviewed mappings.
+        # Lấy mapping đã review, không lọc enabled.
         mappings = self.repository.get_mappings_for_rules(rules)
 
         # Step 3: Create mapping lookup index.
@@ -68,7 +68,7 @@ class MisconfigRuleNormalizationService:
             key = self._mapping_key(mapping)
 
             if key in mapping_index:
-                raise RuntimeError(f"Multiple active mappings for source_file={mapping['source_file']}")
+                raise RuntimeError(f"Multiple reviewed mappings for source_file={mapping['source_file']}")
 
             mapping_index[key] = mapping
 
@@ -129,7 +129,6 @@ class MisconfigRuleNormalizationService:
                 "result_mapping": normalized_rule.get("result_mapping", {}),
                 "normalized_rule": normalized_rule,
                 "execution_status": status,
-                "enabled": False,
                 "validation_error": result.get("validation_error"),
             })
 

@@ -531,7 +531,7 @@ class MisconfigRuleRepository:
                           m.review_note
                    FROM vuln_misconfig_rule_mapping m JOIN requested_rules r 
                        ON m.source_id = r.source_id AND m.source_file = r.source_file AND m.content_sha256 = r.content_sha256
-                   WHERE m.verification_status = 'REVIEWED' AND m.enabled = TRUE
+                   WHERE m.verification_status = 'REVIEWED'
                    ORDER BY m.id
                    """).bindparams(bindparam("rule_keys",type_=JSONB))
 
@@ -539,7 +539,7 @@ class MisconfigRuleRepository:
             rows = conn.execute(sql, {"rule_keys": payload}).mappings().all()
 
         mappings = [dict(row) for row in rows]
-        logger.info("Loaded %d active mappings for %d source rules", len(mappings), len(payload))
+        logger.info("Loaded %d reviewed mappings for %d source rules", len(mappings), len(payload))
 
         return mappings
 
@@ -615,7 +615,7 @@ class MisconfigRuleRepository:
 
     @staticmethod
     def get_enabled_normalized_rules() -> list[dict]:
-        """Lấy các rule đã chuẩn hóa và được kích hoạt."""
+        """Lấy rule đã chuẩn hóa, không lọc enabled và execution_status."""
 
         sql = text("""
                    SELECT id,
@@ -632,9 +632,7 @@ class MisconfigRuleRepository:
                           result_mapping,
                           normalized_rule
                    FROM vuln_misconfig_rule_normalized
-                   WHERE execution_status = 'SUPPORTED'
-                     AND enabled = TRUE
-                     AND normalized_rule IS NOT NULL
+                   WHERE normalized_rule IS NOT NULL
                    ORDER BY id
                    """)
 
@@ -642,6 +640,6 @@ class MisconfigRuleRepository:
             rows = conn.execute(sql).mappings().all()
 
         rules = [dict(row) for row in rows]
-        logger.info("Loaded %d enabled normalized rules", len(rules))
+        logger.info("Loaded %d normalized rules", len(rules))
         return rules
 

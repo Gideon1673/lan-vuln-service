@@ -51,8 +51,8 @@ class MisconfigRuleNormalizer:
         if mapping is None:
             return self._result("UNSUPPORTED", error="No mapping found")
 
-        if mapping.get("verification_status") != "REVIEWED" or mapping.get("enabled") is not True:
-            return self._result("NEEDS_REVIEW", error="Mapping is not approved and enabled")
+        if mapping.get("verification_status") != "REVIEWED":
+            return self._result("NEEDS_REVIEW", error="Mapping is not approved")
 
         for field in ("source_id", "source_file", "content_sha256"):
             if rule.get(field) != mapping.get(field):

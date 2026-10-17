@@ -1,5 +1,4 @@
 from typing import Any
-from uuid import uuid4
 
 from app.common.messaging import (bus, BaseEvent, EventKeys)
 
@@ -21,7 +20,6 @@ def publish_step_completed(
         result["findings"] = [
             {
                 **finding,
-                "finding_id": finding.get("finding_id") or str(uuid4()),
                 "ip": finding.get("ip") or finding["host"],
                 "reference_url": finding.get("reference_url") or finding["evidence"]["reference"]
             }
